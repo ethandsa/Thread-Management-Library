@@ -17,8 +17,8 @@ thread_group = ThreadGroup("Verifying Users", max_concurrent_threads=10)
 # Thread group to verify users in a data structure parallely
 
 for user in users:
-	thread_group.add_task(verify_user, args=(user))
-	# If number of users are greater than 10, 
+    thread_group.add_task(verify_user, args=(user))
+    # If number of users are greater than 10, 
     # ThreadGroup will automatically limit the number of active threads
 
 thread_group.join(600)  #  Waits for threads to terminate with a timeout of 600 seconds.
@@ -33,10 +33,10 @@ If two thread group objects are created inside the main thread, the tree's state
 ```
 		             MainThread(ThreadEventTreeNode)
 				       /    \
-					  /      \
-					 /        \
+			              /      \
+				     /        \
 				    /          \
-		  ThreadGroup1         ThreadGroup2
+		         ThreadGroup1         ThreadGroup2
 ```
 
 Each node has an Event object associated with it. And each thread group would have spawned several worker threads which are logically encapsulated inside the ThreadGroup object.
@@ -44,13 +44,13 @@ Each node has an Event object associated with it. And each thread group would ha
 ```
 		             MainThread(ThreadEventTreeNode)
 				       /    \
-					  /      \
-					 /        \
+			              /      \
+				     /        \
 				    /          \
-		  ThreadGroup1         ThreadGroup2
-            ~ Thread1            ~ Thread4
-            ~ Thread2            ~ Thread5
-            ~ Thread3            ~ Thread6
+		         ThreadGroup1         ThreadGroup2
+                          ~ Thread1            ~ Thread4
+                          ~ Thread2            ~ Thread5
+                          ~ Thread3            ~ Thread6
 ```
 
 Each thread group has 3 threads.
@@ -64,18 +64,18 @@ Let's consider the first case and the earlier example of User verification.
 valid_users = []
 
 def verify_user(user):
-	retries = 3
-	while retries > 0:
-		try:
-			verify_user_internal()  # internal call made to verify user
-			valid_users.append(user)
-		except UserVerificationException:
-			logger.info("Failed to verify user, sleeping for 5 seconds and retrying")
-			child_thread_utils = ChildThreadUtils()
+    retries = 3
+    while retries > 0:
+        try:
+            verify_user_internal()  # internal call made to verify user
+            valid_users.append(user)
+        except UserVerificationException:
+            logger.info("Failed to verify user, sleeping for 5 seconds and retrying")
+            child_thread_utils = ChildThreadUtils()
 
-			# At this stage, if the event is set in the next 5 seconds, we will exit the verification loop.
-			if not child_thread_utils.event_aware_sleep(5):  
-				break
+            # At this stage, if the event is set in the next 5 seconds, we will exit the verification loop.
+            if not child_thread_utils.event_aware_sleep(5):  
+                break
 ```
 
 Note that checks for the state of the event can be added in key places as required, to ensure that we are not unnecessarily performing operations, and we are safely terminating threads.
@@ -86,7 +86,7 @@ the main thread with no parent group, then `child_thread_utils.event_aware_sleep
 ```
 thread_group = ThreadGroup("Verifying Users")
 for user in users:
-	thread_group.add_task(verify_user, args=(user))
+    thread_group.add_task(verify_user, args=(user))
 
 parent_thread_utils = ParentThreadUtils(thread_group)
 ```
@@ -103,10 +103,10 @@ The ThreadEvents Controller maintains the hierarchy of all the thread groups cre
 
 ```
 def worker_method():
-	# We are creating multiple thread groups inside this method, each executing respective tasks in parallel
-	thread_group_2_1 = ThreadGroup()
-	thread_group_2_2 = ThreadGroup()
-	thread_group_2_3 = ThreadGroup()
+    # We are creating multiple thread groups inside this method, each executing respective tasks in parallel
+    thread_group_2_1 = ThreadGroup()
+    thread_group_2_2 = ThreadGroup()
+    thread_group_2_3 = ThreadGroup()
 
 thread_group_2 = ThreadGroup()
 thread_group_2.add_task(worker_method)
@@ -115,17 +115,17 @@ thread_group_2.add_task(worker_method)
 ```
 		             MainThread(ThreadEventTreeNode)
 				       /       \
-					  /         \
-					 /           \
+				      /         \
+				     /           \
 				    /             \
-		  ThreadGroup1            ThreadGroup2
-		  						 /    |    \
-		  					    /	  |     \
-		  					   /	  |      \
-		  				   	  /	      |       \
-		  		ThreadGroup2.1		  |		   ThreadGroup2.3
-		  		                      |
-		  		                ThreadGroup2.2
+		          ThreadGroup1            ThreadGroup2
+		  				   /    |    \
+		  			          /     |     \
+		  			         /      |      \
+		  			        /	|       \
+		  		  ThreadGroup2.1	|	ThreadGroup2.3
+		  		                        |
+		  		                 ThreadGroup2.2
 ```
 
 Let's say ThreadGroup2 realizes it needs to abort all operations,
