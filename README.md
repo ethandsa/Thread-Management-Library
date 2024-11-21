@@ -31,26 +31,26 @@ Every time a ThreadGroup object is created there is an associated Event object t
 If two thread group objects are created inside the main thread, the tree's state will be
 
 ```
-		             MainThread(ThreadEventTreeNode)
-				       /    \
-			              /      \
-				     /        \
-				    /          \
-		         ThreadGroup1         ThreadGroup2
+         MainThread(ThreadEventTreeNode)
+                    /    \
+                   /      \
+                  /        \
+                 /          \
+      ThreadGroup1         ThreadGroup2
 ```
 
 Each node has an Event object associated with it. And each thread group would have spawned several worker threads which are logically encapsulated inside the ThreadGroup object.
 
 ```
-		             MainThread(ThreadEventTreeNode)
-				       /    \
-			              /      \
-				     /        \
-				    /          \
-		         ThreadGroup1         ThreadGroup2
-                          ~ Thread1            ~ Thread4
-                          ~ Thread2            ~ Thread5
-                          ~ Thread3            ~ Thread6
+         MainThread(ThreadEventTreeNode)
+                    /    \
+                   /      \
+                  /        \
+                 /          \
+      ThreadGroup1         ThreadGroup2
+       ~ Thread1            ~ Thread4
+       ~ Thread2            ~ Thread5
+       ~ Thread3            ~ Thread6
 ```
 
 Each thread group has 3 threads.
@@ -113,19 +113,19 @@ thread_group_2.add_task(worker_method)
 ```
 
 ```
-		             MainThread(ThreadEventTreeNode)
-				       /       \
-				      /         \
-				     /           \
-				    /             \
-		          ThreadGroup1            ThreadGroup2
-		  				   /    |    \
-		  			          /     |     \
-		  			         /      |      \
-		  			        /	|       \
-		  		  ThreadGroup2.1	|	ThreadGroup2.3
-		  		                        |
-		  		                 ThreadGroup2.2
+         MainThread(ThreadEventTreeNode)
+                    /    \
+                   /      \
+                  /        \
+                 /          \
+      ThreadGroup1         ThreadGroup2
+                            /    |    \
+                           /     |     \
+                          /      |      \
+                         /       |       \
+           ThreadGroup2.1        |        ThreadGroup2.3
+                                 |
+                           ThreadGroup2.2
 ```
 
 Let's say ThreadGroup2 realizes it needs to abort all operations,
