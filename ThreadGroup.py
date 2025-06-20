@@ -1,6 +1,7 @@
 import time
 import uuid
 import logging
+import threadutils
 
 from _utils import generate_random_string
 from Thread import Thread
@@ -163,6 +164,9 @@ class ThreadGroup:
                 raise Exception(list(self.exceptions.values())[0])
         else:
             logger.info("Ignoring exceptions encountered in thread execution.")
+
+    def wait_for_condition(self, expression, timeout, sleep_interval=0.1):
+        threadutils.wait_for_condition(expression, timeout, sleep_interval, event=self.get_event())
 
     def set_event_for_child_tasks(self):
         self.event_controller.set_events_for_thread_group(self.tg_uuid)
