@@ -71,28 +71,25 @@ def verify_user(user):
             valid_users.append(user)
         except UserVerificationException:
             logger.info("Failed to verify user, sleeping for 5 seconds and retrying")
-            child_thread_utils = ChildThreadUtils()
 
             # At this stage, if the event is set in the next 5 seconds, we will exit the verification loop.
-            if not child_thread_utils.event_aware_sleep(5):  
+            if not thread_utils.event_aware_sleep(5):  
                 break
 ```
 
 Note that checks for the state of the event can be added in key places as required, to ensure that we are not unnecessarily performing operations, and we are safely terminating threads.
 
-When ChildThreadUtils is instantiated, it automatically fetches the event associated with the thread group of the currently executing child thread. If no event is found, i.e. this is 
-the main thread with no parent group, then `child_thread_utils.event_aware_sleep` will perform a regular sleep.
+When threadutils methods are used by child threads, it automatically fetches the event associated with the thread group of the currently executing child thread. If no event is found, i.e. this is 
+the main thread with no parent group, then `thread_utils.event_aware_sleep` will perform a regular sleep.
 
 ```
 thread_group = ThreadGroup("Verifying Users")
 for user in users:
     thread_group.add_task(verify_user, args=(user))
-
-parent_thread_utils = ParentThreadUtils(thread_group)
 ```
-ParentThreadUtils cannot auto-fetch the event associated with the current (parent) thread, as it could have created several different ThreadGroups. It needs context of which ThreadGroup to perform operations on.
+threadutils cannot auto-fetch the event associated with the current (parent) thread, as it could have created several different ThreadGroups. It needs context of which ThreadGroup to perform operations on, so its usage would be through the ThreadGroup object.
 ```
-parent_thread_utils.wait_for_condition(lambda: len(valid_users) > 0, timeout=600)
+thread_group.wait_for_condition(lambda: len(valid_users) > 0, timeout=600)
 ```
 The parent thread will wait for the length of the list valid_users to be greater than zero, and then inform the child threads to terminate, since we need just one valid user. 
 ```
