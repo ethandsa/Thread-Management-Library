@@ -2,13 +2,93 @@ import time
 import uuid
 import logging
 import threadutils
+import threading
 
 from _utils import generate_random_string
-from Thread import Thread
-from ThreadEvents import ThreadEventsController
-from ThreadSafeObjects import *
+from thread_events import ThreadEventsController
 
 logger = logging.getLogger(__name__)
+
+
+class Thread(threading.Thread):
+    """
+    Custom thread class extending Python's built-in threading.Thread.
+    Adds support for associating threads with a parent thread and a thread group (tg_uuid).
+
+    Attributes:
+        parent_thread_ident (int): Identifier of the thread that spawned this thread.
+        tg_uuid (UUID): Unique identifier for the thread group this thread belongs to.
+    """
+
+    def __init__(self, target=None, name=None, args=(), kwargs=None, tg_uuid=None):
+        """
+        Initializes the custom Thread instance.
+
+        Args:
+            target (callable, optional): The function to be executed by the thread.
+            name (str, optional): Name of the thread.
+            args (tuple, optional): Positional arguments to pass to the target function.
+            kwargs (dict, optional): Keyword arguments to pass to the target function.
+            tg_uuid (UUID, optional): Unique identifier for the thread group this thread belongs to.
+
+        Attributes Set:
+            parent_thread_ident (int): The identifier of the parent thread (the thread that created this thread).
+            tg_uuid (UUID): The thread group UUID associated with this thread.
+        """
+        super().__init__(target=target, name=name, args=args, kwargs=kwargs)
+        self.parent_thread_ident = threading.current_thread().ident
+        self.tg_uuid = tg_uuid
+
+
+class ThreadSafeQueue(list):
+    def __init__(self):
+        self._thread_lock = threading.Lock()
+        super(ThreadSafeQueue, self).__init__()
+
+    def __len__(self):
+        with self._thread_lock:
+            return super(ThreadSafeQueue, self).__len__()
+
+    def append(self, obj):
+        with self._thread_lock:
+            super(ThreadSafeQueue, self).append(obj)
+
+    def pop(self, index=0):
+        with self._thread_lock:
+            try:
+                return super(ThreadSafeQueue, self).pop(index)
+            except IndexError:
+                return None
+
+    def clear(self):
+        with self._thread_lock:
+            super(ThreadSafeQueue, self).clear()
+
+
+class ThreadSafeInt:
+    def __init__(self):
+        self._thread_lock = threading.Lock()
+        self._value = 0
+
+    def increment(self, by):
+        with self._thread_lock:
+            self._value = self._value + by
+            return self._value
+
+    def increment_if_less_than(self, max_value):
+        with self._thread_lock:
+            if self._value < max_value:
+                self._value += 1
+                return True
+            return False
+
+    def equals(self, compare_with):
+        with self._thread_lock:
+            return compare_with == self._value
+
+    def value(self):
+        with self._thread_lock:
+            return self._value
 
 
 class ThreadGroup:

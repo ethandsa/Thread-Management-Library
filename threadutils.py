@@ -1,6 +1,6 @@
 import time
 
-from ThreadEvents import ThreadEventsController
+from thread_events import ThreadEventsController
 
 
 _event_controller = ThreadEventsController.get_instance()
