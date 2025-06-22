@@ -1,7 +1,7 @@
 import threading
 import uuid
 
-from thread_group import Thread
+from threadmanager.thread import Thread
 
 _thread_lock = threading.RLock()  # Module level re-entrant lock
 
