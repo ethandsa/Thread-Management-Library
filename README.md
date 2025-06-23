@@ -1,5 +1,5 @@
 
-# Thread Mangement Library
+# Thread Management Library
 
 This library addresses the below requirements:
 
@@ -13,6 +13,8 @@ Threads are grouped by ThreadGroup objects. A ThreadGroup object is created in t
 Example usage:
 
 ```
+from threadmanager import ThreadGroup
+
 thread_group = ThreadGroup("Verifying Users", max_concurrent_threads=10)  
 # Thread group to verify users in a data structure parallely
 
@@ -26,7 +28,7 @@ thread_group.join(600)  #  Waits for threads to terminate with a timeout of 600 
 
 What if we wanted just one verified user? There is no default way for a thread to be aware that this condition is met. Neither is there a mechanism to kill an active thread, as that would be unsafe.
 
-Every time a ThreadGroup object is created there is an associated Event object that is maintained. The parent thread has this context through the ThreadGroup object, and all the threads spawned by the thread group (i.e. the child threads) are aware of this object too. This is faciliated by maintaining an n-ary tree to track the hierarchy.
+Every time a ThreadGroup object is created there is an associated Event object that is maintained. The parent thread has this context through the ThreadGroup object, and all the threads spawned by the thread group (i.e. the child threads) are aware of this object too. This is facilitated by maintaining an n-ary tree to track the hierarchy.
 
 If two thread group objects are created inside the main thread, the tree's state will be
 
@@ -61,6 +63,8 @@ There are 2 use cases for thread communication:
 Let's consider the first case and the earlier example of User verification.
 
 ```
+from threadmanager import event_aware_sleep
+
 valid_users = []
 
 def verify_user(user):
@@ -72,22 +76,22 @@ def verify_user(user):
         except UserVerificationException:
             logger.info("Failed to verify user, sleeping for 5 seconds and retrying")
 
-            # At this stage, if the event is set in the next 5 seconds, we will exit the verification loop.
-            if not thread_utils.event_aware_sleep(5):  
+            # At this stage, if the event is set before the next 5 seconds, we will exit the verification loop.
+            if not event_aware_sleep(5):  
                 break
 ```
 
 Note that checks for the state of the event can be added in key places as required, to ensure that we are not unnecessarily performing operations, and we are safely terminating threads.
 
-When threadutils methods are used by child threads, it automatically fetches the event associated with the thread group of the currently executing child thread. If no event is found, i.e. this is 
-the main thread with no parent group, then `thread_utils.event_aware_sleep` will perform a regular sleep.
+When event-aware methods are used by child threads, it automatically fetches the event associated with the thread group of the currently executing child thread. If no event is found, i.e. this is 
+the main thread with no parent group, then `event_aware_sleep` will perform a regular sleep.
 
 ```
 thread_group = ThreadGroup("Verifying Users")
 for user in users:
     thread_group.add_task(verify_user, args=(user))
 ```
-threadutils cannot auto-fetch the event associated with the current (parent) thread, as it could have created several different ThreadGroups. It needs context of which ThreadGroup to perform operations on, so its usage would be through the ThreadGroup object.
+threadmanager cannot auto-fetch the event associated with the current (parent) thread, as it could have created several different ThreadGroups. It needs context of which ThreadGroup to perform operations on, so its usage would be through the ThreadGroup object.
 ```
 thread_group.wait_for_condition(lambda: len(valid_users) > 0, timeout=600)
 ```
@@ -135,4 +139,3 @@ and all events for the thread group and its child thread groups will be set, eff
 The hierarchy is maintained and computed, completely abstracted. It doesn't require any additional consideration when creating a ThreadGroup object.
 
 It is also possible for the n-ary tree to become a forest, in case we spawn daemon threads from a thread group, and they still need to communicate amongst each other. Information about this disjoint tree will also be maintained automatically.
-
