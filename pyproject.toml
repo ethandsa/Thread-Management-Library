@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "threadgroup-manager"
-version = "0.1.1"
+version = "0.1.2"
 description = "A Python library for hierarchical thread group management with event-based coordination."
 readme = "README.md"
 requires-python = ">=3.7"
@@ -14,7 +14,7 @@ license = { text = "MIT" }
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/ethandsa/Thread-Management-Library"
+Repository = "https://github.com/ethandsa/Thread-Management-Library"
 
 [tool.setuptools]
 packages = ["threadmanager"]
